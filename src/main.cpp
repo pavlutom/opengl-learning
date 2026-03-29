@@ -1,11 +1,13 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <string>
+#include <vector>
+
+#include "stb_image.h"
 
 #include "shader.h"
+#include "texture.h"
 
 
 #define WINDOW_WIDTH 800
@@ -30,7 +32,7 @@ void processInput(GLFWwindow* window)
 
 
 // Rendering
-void render(unsigned int VAO, const Shader& shader)
+void render(unsigned int VAO, const Shader& shader, std::vector<Texture> textures)
 {
 	// clear
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -39,7 +41,12 @@ void render(unsigned int VAO, const Shader& shader)
 	// shaders
 	shader.Use();
 	
-	// bind VAO
+	// bind
+	for (unsigned short i = 0; i < textures.size(); i++)
+	{
+		textures[i].Bind(i);
+		shader.setInt("tex" + std::to_string(i + 1), i);
+	}
 	glBindVertexArray(VAO);
 
 	// draw
@@ -51,10 +58,10 @@ void render(unsigned int VAO, const Shader& shader)
 
 
 float vertices[] = {
-	// position         // color
-	-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-	 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-	 0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f
+	// position         // color          // texture coords
+	-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+	 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+	 0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.5f, 1.0f,
 };
 unsigned int indices[] = { 
 	0, 1, 2,
@@ -107,15 +114,23 @@ int main()
 	
 	// set the vertex attributes pointers
 	// position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	// color
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-
+	// texture
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	// unbind VAO
 	glBindBuffer(GL_ARRAY_BUFFER, NULL);
+
+	// Textures
+	stbi_set_flip_vertically_on_load(true);
+	Texture textureContainer("resources/images/container.jpg");
+	Texture textureFace("resources/images/awesomeface.png");
+	std::vector<Texture> textures = { textureContainer, textureFace };
 
 	// Shaders
 	Shader defaultShader("resources/shaders/default");
@@ -132,7 +147,7 @@ int main()
 		processInput(window);
 
 		// Rendering
-		render(VAO, defaultShader);
+		render(VAO, defaultShader, textures);
 
 		// check and call events and swap the buffers
 		glfwSwapBuffers(window);
