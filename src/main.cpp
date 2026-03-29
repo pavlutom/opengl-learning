@@ -20,6 +20,7 @@
 #define WINDOW_WIDTH_F 800.0f
 #define WINDOW_HEIGHT_F 600.0f
 #define WINDOW_BASE_TITLE "GL test"
+#define FPS_UPDATE_INTERVAL_S 0.2
 
 
 // Window resize callback
@@ -152,6 +153,9 @@ int main()
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	// Disable VSync
+	//glfwSwapInterval(0);
+
 	// Buffers
 	unsigned int VBO, VAO;
 	glGenBuffers(1, &VBO);
@@ -189,9 +193,28 @@ int main()
 		return -1;
 	}
 
+	double t1, t2 = 0.0, dt = 0.0;
+	int frameCtr = 0.0, fps;
+	std::string title = WINDOW_BASE_TITLE;
+
 	// Main loop
 	while (!glfwWindowShouldClose(window))
 	{
+		// FPS counter
+		t1 = t2;
+		t2 = glfwGetTime();
+		dt += t2 - t1;
+		frameCtr++;
+		if (dt >= FPS_UPDATE_INTERVAL_S)
+		{
+			fps = (int)(frameCtr / dt);
+			dt = 0.0;
+			frameCtr = 0;
+
+			title = WINDOW_BASE_TITLE + (" (" + std::to_string(fps) + " FPS)");
+			glfwSetWindowTitle(window, title.c_str());
+		}
+
 		// Input
 		processInput(window);
 
