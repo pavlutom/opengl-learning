@@ -5,6 +5,8 @@
 #include <sstream>
 #include <string>
 
+#include "shader.h"
+
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -27,84 +29,15 @@ void processInput(GLFWwindow* window)
 }
 
 
-std::string readFileContents(const std::string& filePath)
-{
-	std::ifstream fileStream(filePath);
-
-	if (!fileStream.is_open())
-	{
-		std::cerr << "Could not read file " << filePath << ". File does not exist." << std::endl;
-		return "";
-	}
-
-	std::stringstream buffer;
-	buffer << fileStream.rdbuf();
-	return buffer.str();
-}
-
-
-// Compile shaders
-unsigned int compileShaders(std::string path)
-{
-	std::string vertSource = readFileContents(path + "/shader.vert");
-	std::string fragSource = readFileContents(path + "/shader.frag");
-
-	const char* vertSourceC = vertSource.c_str();
-	const char* fragSourceC = fragSource.c_str();
-
-	unsigned int vertShader, fragShader;
-	vertShader = glCreateShader(GL_VERTEX_SHADER);
-	fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-	int successVert, successFrag;
-	char infoLog[512];
-
-	glShaderSource(vertShader, 1, &vertSourceC, NULL);
-	glCompileShader(vertShader);
-	glGetShaderiv(vertShader, GL_COMPILE_STATUS, &successVert);
-	if (!successVert)
-	{
-		glGetShaderInfoLog(vertShader, 512, NULL, infoLog);
-		std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-
-	glShaderSource(fragShader, 1, &fragSourceC, NULL);
-	glCompileShader(fragShader);
-	glGetShaderiv(fragShader, GL_COMPILE_STATUS, &successFrag);
-	if (!successFrag)
-	{
-		glGetShaderInfoLog(fragShader, 512, NULL, infoLog);
-		std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-
-	if (!successVert || !successFrag)
-	{
-		return NULL;
-	}
-
-	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
-
-	glAttachShader(shaderProgram, vertShader);
-	glAttachShader(shaderProgram, fragShader);
-	glLinkProgram(shaderProgram);
-
-	glDeleteShader(vertShader);
-	glDeleteShader(fragShader);
-
-	return shaderProgram;
-}
-
-
 // Rendering
-void render(unsigned int VAO, unsigned int shaderProgram)
+void render(unsigned int VAO, const Shader& shader)
 {
 	// clear
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// shaders
-	glUseProgram(shaderProgram);
+	shader.Use();
 	
 	// bind VAO
 	glBindVertexArray(VAO);
@@ -181,10 +114,10 @@ int main()
 	glBindBuffer(GL_ARRAY_BUFFER, NULL);
 
 	// Shaders
-	unsigned int defaultShaders = compileShaders("resources/shaders/default");
-	if (!defaultShaders)
+	Shader defaultShader("resources/shaders/default");
+	if (!defaultShader.IsLoaded())
 	{
-		std::cout << "Failed to compile shaders." << std::endl;
+		std::cerr << "Failed to compile shaders." << std::endl;
 		return -1;
 	}
 
@@ -195,7 +128,7 @@ int main()
 		processInput(window);
 
 		// Rendering
-		render(VAO, defaultShaders);
+		render(VAO, defaultShader);
 
 		// check and call events and swap the buffers
 		glfwSwapBuffers(window);

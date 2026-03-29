@@ -8,7 +8,11 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
-add_executable(gltest src/main.cpp)
+file(GLOB_RECURSE SRC_HEADERS "src/headers/*.h")
+file(GLOB_RECURSE SRC_IMPL "src/impl/*.cpp")
+
+add_executable(gltest src/main.cpp ${SRC_HEADERS} ${SRC_IMPL})
+target_include_directories(gltest PRIVATE "src/headers")
 
 # Link everything together
 target_link_libraries(gltest PRIVATE glfw glad::glad glm::glm)
