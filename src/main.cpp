@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
+#include <glm/trigonometric.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -15,70 +16,14 @@
 #include "texture.h"
 
 
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 600
-#define WINDOW_WIDTH_F 800.0f
-#define WINDOW_HEIGHT_F 600.0f
+#define WINDOW_BASE_WIDTH 800
+#define WINDOW_BASE_HEIGHT 600
 #define WINDOW_BASE_TITLE "GL test"
-#define FPS_UPDATE_INTERVAL_S 0.2
+#define FPS_UPDATE_INTERVAL_S 0.5
+#define FOV_Y 45.0f
 
 
-// Window resize callback
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-	glViewport(0, 0, width, height);
-}
-
-
-// Input processing
-void processInput(GLFWwindow* window)
-{
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-		glfwSetWindowShouldClose(window, true);
-	}
-}
-
-
-// Rendering
-void render(unsigned int VAO, const Shader& shader, std::vector<Texture> textures)
-{
-	// enable depth buffer
-	glEnable(GL_DEPTH_TEST);
-
-	// clear
-	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// transform
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-
-	glm::mat4 view = glm::mat4(1.0f);
-	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-
-	glm::mat4 projection;
-	projection = glm::perspective(glm::radians(45.0f), WINDOW_WIDTH_F / WINDOW_HEIGHT_F, 0.1f, 100.0f);
-
-	// shaders
-	shader.Use();
-	shader.setMatF4("model", glm::value_ptr(model));
-	shader.setMatF4("view", glm::value_ptr(view));
-	shader.setMatF4("projection", glm::value_ptr(projection));
-	
-	// bind
-	for (unsigned short i = 0; i < textures.size(); i++)
-	{
-		textures[i].Bind(i);
-		shader.setInt("tex" + std::to_string(i + 1), i);
-	}
-	glBindVertexArray(VAO);
-
-	// draw
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-
-	// unbind VAO
-	glBindVertexArray(0);
-}
+float WINDOW_WIDTH = 1.0f, WINDOW_HEIGHT = 1.0f;
 
 
 float vertices[] = {
@@ -125,6 +70,86 @@ float vertices[] = {
 	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 };
 
+glm::vec3 cubePositions[] = {
+	glm::vec3(0.0f,  0.0f,  0.0f),
+	glm::vec3(2.0f,  5.0f, -15.0f),
+	glm::vec3(-1.5f, -2.2f, -2.5f),
+	glm::vec3(-3.8f, -2.0f, -12.3f),
+	glm::vec3(2.4f, -0.4f, -3.5f),
+	glm::vec3(-1.7f,  3.0f, -7.5f),
+	glm::vec3(1.3f, -2.0f, -2.5f),
+	glm::vec3(1.5f,  2.0f, -2.5f),
+	glm::vec3(1.5f,  0.2f, -1.5f),
+	glm::vec3(-1.3f,  1.0f, -1.5f)
+};
+
+
+// Window resize callback
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	glViewport(0, 0, width, height);
+	WINDOW_WIDTH = (float)width;
+	WINDOW_HEIGHT = (float)height;
+}
+
+
+// Input processing
+void processInput(GLFWwindow* window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+		glfwSetWindowShouldClose(window, true);
+	}
+}
+
+
+// Rendering
+void render(unsigned int VAO, const Shader& shader, std::vector<Texture> textures)
+{
+	// enable depth buffer
+	glEnable(GL_DEPTH_TEST);
+
+	// clear
+	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// define transforms
+	glm::mat4 view = glm::mat4(1.0f);
+	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+	glm::mat4 projection;
+	projection = glm::perspective(glm::radians(FOV_Y), WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f);
+
+	// shaders
+	shader.Use();
+	
+	// textures
+	for (unsigned short i = 0; i < textures.size(); i++)
+	{
+		textures[i].Bind(i);
+		shader.setInt("tex" + std::to_string(i + 1), i);
+	}
+	glBindVertexArray(VAO);
+
+	// transforms
+	shader.setMatF4("view", glm::value_ptr(view));
+	shader.setMatF4("projection", glm::value_ptr(projection));
+	for (unsigned int i = 0; i < 10; i++)
+	{
+		// define model transform per cube
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, cubePositions[i]);
+		float angle = 20.0f * i + 30.0f * (float)glfwGetTime();
+		model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+		shader.setMatF4("model", glm::value_ptr(model));
+
+		// draw
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+	}
+
+	// unbind VAO
+	glBindVertexArray(0);
+}
+
 
 int main()
 {
@@ -134,7 +159,7 @@ int main()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_BASE_TITLE, NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(WINDOW_BASE_WIDTH, WINDOW_BASE_HEIGHT, WINDOW_BASE_TITLE, NULL, NULL);
 	if (window == NULL) {
 		std::cerr << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
@@ -150,7 +175,7 @@ int main()
 	}
 
 	// Viewport
-	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+	framebuffer_size_callback(window, WINDOW_BASE_WIDTH, WINDOW_BASE_HEIGHT);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	// Disable VSync
