@@ -37,11 +37,7 @@ void render(unsigned int VAO, const Shader& shader)
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// shaders
-	float timeValue = glfwGetTime();
-	float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-	int vertexColorLocation = shader.GetUniformLocation("vertColor");
 	shader.Use();
-	glUniform4f(vertexColorLocation, 1 - greenValue, greenValue, 0.0f, 1.0f);
 	
 	// bind VAO
 	glBindVertexArray(VAO);
@@ -55,9 +51,10 @@ void render(unsigned int VAO, const Shader& shader)
 
 
 float vertices[] = {
-	-0.5f, -0.5f, 0.0f,
-	 0.5f, -0.5f, 0.0f,
-	 0.0f,  0.5f, 0.0f,
+	// position         // color
+	-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+	 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
+	 0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f
 };
 unsigned int indices[] = { 
 	0, 1, 2,
@@ -109,8 +106,13 @@ int main()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	
 	// set the vertex attributes pointers
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	// position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+	// color
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
 
 	// unbind VAO
 	glBindBuffer(GL_ARRAY_BUFFER, NULL);

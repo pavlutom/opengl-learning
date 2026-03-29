@@ -39,6 +39,20 @@ int Shader::GetUniformLocation(const std::string& name) const {
 	return glGetUniformLocation(this->ID, name.c_str());
 }
 
+void Shader::setBool(const std::string& name, bool value) const {
+	glUniform1i(glGetUniformLocation(this->ID, name.c_str()), value);
+}
+void Shader::setInt(const std::string& name, int value) const {
+	glUniform1i(glGetUniformLocation(this->ID, name.c_str()), value);
+}
+void Shader::setFloat(const std::string& name, float value) const {
+	glUniform1f(glGetUniformLocation(this->ID, name.c_str()), value);
+}
+void Shader::setFloat4(const std::string& name, float x, float y, float z, float w) const {
+	glUniform4f(glGetUniformLocation(this->ID, name.c_str()), x, y, z, w);
+}
+
+
 unsigned int Shader::load(const std::string& path, unsigned int type) {
 	const char* ext;
 	switch (type) {
