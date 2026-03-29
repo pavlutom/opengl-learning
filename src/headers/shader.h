@@ -13,6 +13,7 @@ public:
 	void setInt(const std::string& name, int value) const;
 	void setFloat(const std::string& name, float value) const;
 	void setFloat4(const std::string& name, float x, float y, float z, float w) const;
+	void setMatF4(const std::string& name, float *valPtr) const;
 private:
 	unsigned int ID{};
 	static unsigned int load(const std::string& path, unsigned int type);

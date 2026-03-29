@@ -51,6 +51,9 @@ void Shader::setFloat(const std::string& name, float value) const {
 void Shader::setFloat4(const std::string& name, float x, float y, float z, float w) const {
 	glUniform4f(glGetUniformLocation(this->ID, name.c_str()), x, y, z, w);
 }
+void Shader::setMatF4(const std::string& name, float* valPtr) const {
+	glUniformMatrix4fv(glGetUniformLocation(this->ID, name.c_str()), 1, GL_FALSE, valPtr);
+}
 
 
 unsigned int Shader::load(const std::string& path, unsigned int type) {

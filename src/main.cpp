@@ -1,8 +1,13 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <iostream>
 #include <string>
 #include <vector>
+
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "stb_image.h"
 
@@ -38,8 +43,13 @@ void render(unsigned int VAO, const Shader& shader, std::vector<Texture> texture
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	// transform
+	glm::mat4 trans = glm::mat4(1.0f);
+	trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+
 	// shaders
 	shader.Use();
+	shader.setMatF4("transform", glm::value_ptr(trans));
 	
 	// bind
 	for (unsigned short i = 0; i < textures.size(); i++)
