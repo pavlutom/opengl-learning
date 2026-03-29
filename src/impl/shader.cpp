@@ -35,6 +35,10 @@ bool Shader::IsLoaded() const {
 	return this->ID != 0;
 }
 
+int Shader::GetUniformLocation(const std::string& name) const {
+	return glGetUniformLocation(this->ID, name.c_str());
+}
+
 unsigned int Shader::load(const std::string& path, unsigned int type) {
 	const char* ext;
 	switch (type) {
