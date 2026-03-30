@@ -158,7 +158,7 @@ void render(unsigned int VAO, const Shader& shader, std::vector<Texture> texture
 		// define model transform per cube
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, cubePositions[i]);
-		float angle = 20.0f * i;
+		float angle = 20.0f * i + (i % 2 == 0 || i % 5 == 0) * 30.0f * (float)glfwGetTime() * i;
 		model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 		shader.setMatF4("model", glm::value_ptr(model));
 
