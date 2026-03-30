@@ -14,6 +14,7 @@
 
 #include "shader.h"
 #include "texture.h"
+#include "camera.h"
 
 
 #define WINDOW_BASE_WIDTH 800
@@ -84,25 +85,10 @@ glm::vec3 cubePositions[] = {
 };
 
 // GLOBALS
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-float yaw = -90.0f;
-float pitch = 0.0f;
-
-bool firstMouse = true;
-float lastX = WINDOW_BASE_WIDTH / 2;
-float lastY = WINDOW_BASE_HEIGHT / 2;
-bool mouseRightPressed = false;
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 double t1, t2 = 0.0, dt = 0.0, dtThis;
 int frameCtr = 0.0, fps;
-
-
-bool isKeyPressed(GLFWwindow* window, int key) {
-	return glfwGetKey(window, key) == GLFW_PRESS;
-}
 
 
 // Window resize callback
@@ -116,86 +102,23 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 // Mouse callback
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-	if (!mouseRightPressed) return;
-
-	if (firstMouse) {
-		lastX = xpos;
-		lastY = ypos;
-		firstMouse = false;
-	}
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos;
-	lastX = xpos;
-	lastY = ypos;
-
-	float sensitivity = 0.1f;
-	xoffset *= sensitivity;
-	yoffset *= sensitivity;
-
-	yaw += xoffset;
-	pitch += yoffset;
-
-	if (pitch > 89.0f) pitch = 89.0f;
-	if (pitch < -89.0f) pitch = -89.0f;
+	camera.MouseCallback(window, xpos, ypos);
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-	if (button == GLFW_MOUSE_BUTTON_RIGHT)
-	{
-		if (action == GLFW_PRESS)
-		{
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-			mouseRightPressed = true;
-		}
-		else if (action == GLFW_RELEASE)
-		{
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-			mouseRightPressed = false;
-			firstMouse = true;
-		}
-	}
+	camera.MouseButtonCallback(window, button, action, mods);
 }
 
 
 // Input processing
 void processInput(GLFWwindow* window)
 {
-	if (isKeyPressed(window, GLFW_KEY_ESCAPE)) {
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
 
-	float slowCoef = 1.0;
-	const float cameraSpeed = 3.5f * dtThis;
-	if (isKeyPressed(window, GLFW_KEY_W)) {
-		cameraPos += cameraSpeed * cameraFront;
-	}
-	if (isKeyPressed(window, GLFW_KEY_S)) {
-		slowCoef = 0.25;
-		cameraPos -= cameraSpeed * cameraFront * slowCoef;
-	}
-	if (isKeyPressed(window, GLFW_KEY_A)) {
-		if (mouseRightPressed) {
-			cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp)) * slowCoef;
-		}
-		else {
-			yaw -= cameraSpeed * 30.0f;
-		}
-	}
-	if (isKeyPressed(window, GLFW_KEY_D)) {
-		if (mouseRightPressed) {
-			cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp)) * slowCoef;
-		}
-		else {
-			yaw += cameraSpeed * 30.0f;
-		}
-	}
-
-	glm::vec3 direction;
-	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	direction.y = sin(glm::radians(pitch));
-	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	cameraFront = glm::normalize(direction);
+	camera.ProcessInput(window, dtThis);
 }
 
 
@@ -214,8 +137,7 @@ void render(unsigned int VAO, const Shader& shader, std::vector<Texture> texture
 	projection = glm::perspective(glm::radians(FOV_Y), WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f);
 
 	// Camera
-	glm::mat4 view;
-	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+	glm::mat4 view = camera.GetView();
 
 	// shaders
 	shader.Use();
