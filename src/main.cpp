@@ -83,6 +83,15 @@ glm::vec3 cubePositions[] = {
 	glm::vec3(-1.3f,  1.0f, -1.5f)
 };
 
+// GLOBALS
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+
+double t1, t2 = 0.0, dt = 0.0, dtThis;
+int frameCtr = 0.0, fps;
+
 
 // Window resize callback
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -99,6 +108,20 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
+
+	const float cameraSpeed = 3.5f * dtThis;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		cameraPos += cameraSpeed * cameraFront;
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		cameraPos -= cameraSpeed * cameraFront;
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+	}
 }
 
 
@@ -112,12 +135,13 @@ void render(unsigned int VAO, const Shader& shader, std::vector<Texture> texture
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// define transforms
-	glm::mat4 view = glm::mat4(1.0f);
-	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-
+	// projection
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(FOV_Y), WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f);
+
+	// Camera
+	glm::mat4 view;
+	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 	// shaders
 	shader.Use();
@@ -138,7 +162,7 @@ void render(unsigned int VAO, const Shader& shader, std::vector<Texture> texture
 		// define model transform per cube
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, cubePositions[i]);
-		float angle = 20.0f * i + 30.0f * (float)glfwGetTime();
+		float angle = 20.0f * i;
 		model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 		shader.setMatF4("model", glm::value_ptr(model));
 
@@ -218,8 +242,6 @@ int main()
 		return -1;
 	}
 
-	double t1, t2 = 0.0, dt = 0.0;
-	int frameCtr = 0.0, fps;
 	std::string title = WINDOW_BASE_TITLE;
 
 	// Main loop
@@ -228,7 +250,8 @@ int main()
 		// FPS counter
 		t1 = t2;
 		t2 = glfwGetTime();
-		dt += t2 - t1;
+		dtThis = t2 - t1;
+		dt += dtThis;
 		frameCtr++;
 		if (dt >= FPS_UPDATE_INTERVAL_S)
 		{
