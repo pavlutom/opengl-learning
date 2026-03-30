@@ -88,6 +88,8 @@ glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
+float yaw = -90.0f;
+float pitch = 0.0f;
 
 double t1, t2 = 0.0, dt = 0.0, dtThis;
 int frameCtr = 0.0, fps;
@@ -103,25 +105,45 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 
 // Input processing
+bool isKeyPressed(GLFWwindow* window, unsigned int key) {
+	return glfwGetKey(window, key) == GLFW_PRESS;
+}
+
 void processInput(GLFWwindow* window)
 {
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+	if (isKeyPressed(window, GLFW_KEY_ESCAPE)) {
 		glfwSetWindowShouldClose(window, true);
 	}
 
 	const float cameraSpeed = 3.5f * dtThis;
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+	if (isKeyPressed(window, GLFW_KEY_W)) {
 		cameraPos += cameraSpeed * cameraFront;
 	}
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+	if (isKeyPressed(window, GLFW_KEY_S)) {
 		cameraPos -= cameraSpeed * cameraFront;
 	}
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+	if (isKeyPressed(window, GLFW_KEY_A)) {
+		if (isKeyPressed(window, GLFW_KEY_LEFT_SHIFT)) {
+			cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+		}
+		else {
+			yaw -= cameraSpeed * 30.0f;
+		}
 	}
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+	if (isKeyPressed(window, GLFW_KEY_D)) {
+		if (isKeyPressed(window, GLFW_KEY_LEFT_SHIFT)) {
+			cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+		}
+		else {
+			yaw += cameraSpeed * 30.0f;
+		}
 	}
+
+	glm::vec3 direction;
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(direction);
 }
 
 
